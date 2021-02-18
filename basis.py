@@ -49,7 +49,7 @@ def Grad(xi, p, m):
     grad_val = 0.0
     
     if p != 0:
-        xij = -1 + (2*(m)/p)
+        xij = -1 + (2*m/p)
     else:
         xij = 1
     
@@ -70,7 +70,7 @@ def Grad(xi, p, m):
                 
                 if xij != xik and xik != xig:
                     prod *= (xi - xik) / (xij - xik)
-        grad_val += (prod/(xij-xig));
+            grad_val += (prod/(xij-xig));
             
             
     return grad_val

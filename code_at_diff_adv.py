@@ -136,10 +136,18 @@ else:
     basis_mat = np.zeros((p+1,nq), float)
     basisG_mat = basis_mat
     
-    for i in range(p):
-        for q in range(nq+1):
+    for i in range(p+1):
+        for q in range(nq):
             basis_mat[i,q] = basis.fn(qp[q],p,i)
             basisG_mat[i,q] = basis.Grad(qp[q],p,i)
-        
-        
+            
+    # main iteration loop
+    for time in range(1,iter):
+        for rk in range(4):
+            res *= 0
+            
+            k = 1
+            Uinterp = U[(p+1)*(k-1):(p+1)*(k-1)+p,1] * basisG_mat
+    
+    
         
