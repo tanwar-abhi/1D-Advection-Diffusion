@@ -10,6 +10,7 @@ Created on Tue Feb 15 11:56:40 2021
 #global endTime, length, M, n, p, h, delta_t
 
 import numpy as np
+import math
 from matplotlib import pyplot as plot
 from scipy.sparse import diags
 import re
@@ -36,6 +37,10 @@ if p==1 or p==2:
     Uexact = initialize.Uinit(X,endTime)                   # Exact solution
     U0 = initialize.Uinit(X, 0)                            # initial value at time t =0
     
+    #######################################################################
+    # Simply copy paste from the "LAD_DG_mod.py" code, based on order1_2
+    #######################################################################
+    
 else:
     speed = 4
     FS = 0                                    #free stream/free stream preservation test indicator
@@ -60,12 +65,16 @@ else:
             else:
                 x[node-1,0] = xbeg + ((j-1)*dellx/p)
         
-    
-        if FS==1:
+        
+    if FS==1:
         U[:,0] = 0.1
     else:
-        U = 0.1 + 0.05*math.exp(-25 * (x-0.5)**2)
+        # U = 0.1 + 0.05*math.exp(-25 * (x-0.5)**2)
         t = 0
-    
+        U = (0.025/math.sqrt(0.000625+0.02*t))*np.exp( (-1*((x-0.5-t)**2))/(0.00125+0.04*t) )
+        
+    # slight modification
+    U[(p+1)*(N-1)+p,0]=U(1,1)
+    Uinit = U
     
     
