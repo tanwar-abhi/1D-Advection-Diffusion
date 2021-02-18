@@ -11,7 +11,8 @@ Created on Tue Feb 15 11:56:40 2021
 
 import numpy as np
 import math
-from matplotlib import pyplot as plot
+#from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 from scipy.sparse import diags
 import re
 import elemental_matrix, initialize, quadrature
@@ -74,7 +75,53 @@ else:
         U = (0.025/math.sqrt(0.000625+0.02*t))*np.exp( (-1*((x-0.5-t)**2))/(0.00125+0.04*t) )
         
     # slight modification
-    U[(p+1)*(N-1)+p,0]=U(1,1)
+    U[(p+1)*(N-1)+p,0] = U[0,0]
     Uinit = U
+    
+    # plotting solution without interpolation over nodes- domain lies between 0 and 1
+    x = np.linspace(0,1,N*(p+1))
+    plt.plot(x,U,'b-')
+    plt.xlabel('x')
+    plt.ylabel('state')
+    plt.title('Initial condition t = 0')
+    
+    # interior penalty- will change to BR2 in next code attempt if this converges 
+    res = np.zeros((N*(p+1),1),float)
+    
+    # mass matrix
+    mass = np.zeros((N*(p+1),N*(p+1)),float)
+    
+    # CFL number
+    CFL = 0.05/(2*p+1)
+    
+    # tolerance
+    tol = 1e-6
+    
+    # time period
+    T = 0.05
+    
+    # time step
+    dellt = CFL*(dellx**2)
+    
+    # iteration number
+    iter = np.ceil(T/dellt)
+    
+    # stability factor for interior penalty method- found by experimentation
+    # DO NOT EDIT
+    if p==0:
+        eta = 2
+    else:
+        if N==2:
+            eta = 0.4*p**2/dellx
+        elif N==4:
+            eta = 0.2*p**2/dellx
+        elif N==8:
+            eta = 0.1*p**2/dellx
+        elif N==16:
+            eta = 0.06*p**2/dellx
+    
+    # error vector
+    err = np.zeros((iter,1),float)
+    
     
     
