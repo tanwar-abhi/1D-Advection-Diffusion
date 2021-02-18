@@ -13,7 +13,7 @@ import numpy as np
 from matplotlib import pyplot as plot
 from scipy.sparse import diags
 import re
-import elemental_matrix, initialize
+import elemental_matrix, initialize, quadrature
 
 endTime = 0.05                                                  # final time               
 alpha = 4                                                     # coefficient associated with advection term
@@ -42,4 +42,30 @@ else:
     adv = 1                                   #%advection on/off
     x = np.zeros((N*(p+1),1),float)
     U = np.zeros((N*(p+1),1),float)
-    dellx=1/N                               #length of each element
+    dellx = 1/N                               #length of each element
+    
+    # Quadrature points
+    nq = p + 5                              #no. of quadrature points
+    qp,qw = quadrature.lgwt(nq,-1,1)
+    qp = np.sort(qp)
+    
+    for i in range(1,N+1):
+        # global location of first node of elemen
+        xbeg = dellx * (i-1)
+        
+        for j in range(1,p+2):
+            node = (p+1) * (i-1) + j
+            if p==0:
+                x[node-1,0] = xbeg
+            else:
+                x[node-1,0] = xbeg + ((j-1)*dellx/p)
+        
+    
+        if FS==1:
+        U[:,0] = 0.1
+    else:
+        U = 0.1 + 0.05*math.exp(-25 * (x-0.5)**2)
+        t = 0
+    
+    
+    
