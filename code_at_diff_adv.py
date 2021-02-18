@@ -70,11 +70,11 @@ else:
     if FS==1:
         U[:,0] = 0.1
     else:
-        # U = 0.1 + 0.05*math.exp(-25 * (x-0.5)**2)
+        # U = 0.1 + 0.05*math.exp(-25 * (x-0.5)**2) ?????
         t = 0
         U = (0.025/math.sqrt(0.000625+0.02*t))*np.exp( (-1*((x-0.5-t)**2))/(0.00125+0.04*t) )
         
-    # slight modification
+    # slight modification ??????
     U[(p+1)*(N-1)+p,0] = U[0,0]
     Uinit = U
     
@@ -123,5 +123,15 @@ else:
     # error vector
     err = np.zeros((iter,1),float)
     
-    
-    
+    # Populating mass matrix
+    for k in range(1, N+1):
+        for i in range(1, p+2):
+            for j in range(1, p+2):
+                for q in range(1, nq+1):
+                    mass[(p+1)*(k-1)+i-1,(p+1)*(k-1)+j-1] = 
+                    mass[]((p+1)*(k-1)+i,(p+1)*(k-1)+j)+(qw(q,1)*
+                                                       basis(qp(q,1),p,i)*
+                                                       basis(qp(q,1),p,j));
+                
+    # transforming to global domain
+    mass=mass*dellx/2
