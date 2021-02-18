@@ -11,11 +11,10 @@ Created on Tue Feb 15 11:56:40 2021
 
 import numpy as np
 import math
-#from matplotlib import pyplot as plt
 import matplotlib.pyplot as plt
 from scipy.sparse import diags
 import re
-import elemental_matrix, initialize, quadrature
+import elemental_matrix, initialize, quadrature, basis
 
 endTime = 0.05                                                  # final time               
 alpha = 4                                                     # coefficient associated with advection term
@@ -38,9 +37,9 @@ if p==1 or p==2:
     Uexact = initialize.Uinit(X,endTime)                   # Exact solution
     U0 = initialize.Uinit(X, 0)                            # initial value at time t =0
     
-    #######################################################################
-    # Simply copy paste from the "LAD_DG_mod.py" code, based on order1_2
-    #######################################################################
+    ########################################################################
+    # Simply copy paste from the "LAD_DG_mod.py" code, based on order1_2   #
+    ########################################################################
     
 else:
     speed = 4
@@ -67,7 +66,7 @@ else:
                 x[node-1,0] = xbeg + ((j-1)*dellx/p)
         
         
-    if FS==1:
+    if FS == 1:
         U[:,0] = 0.1
     else:
         # U = 0.1 + 0.05*math.exp(-25 * (x-0.5)**2) ?????
@@ -121,17 +120,26 @@ else:
             eta = 0.06*p**2/dellx
     
     # error vector
-    err = np.zeros((iter,1),float)
-    
+    err = np.zeros((int(iter),1),float)
+
     # Populating mass matrix
-    for k in range(1, N+1):
-        for i in range(1, p+2):
-            for j in range(1, p+2):
-                for q in range(1, nq+1):
-                    mass[(p+1)*(k-1)+i-1,(p+1)*(k-1)+j-1] = 
-                    mass[]((p+1)*(k-1)+i,(p+1)*(k-1)+j)+(qw(q,1)*
-                                                       basis(qp(q,1),p,i)*
-                                                       basis(qp(q,1),p,j));
+    for k in range(N):
+        for i in range(p+1):
+            for j in range(p+1):
+                for q in range(nq):
+                    mass[(p+1)*(k-1)+i,(p+1)*(k-1)+j] += qw[q] * basis.fn(qp[q],p,i) * basis.fn(qp[q],p,j)
                 
     # transforming to global domain
-    mass=mass*dellx/2
+    mass = mass*dellx/2
+    
+    # matrix of basis function values at each of the quad points for ease of state evaluation
+    basis_mat = np.zeros((p+1,nq), float)
+    basisG_mat = basis_mat
+    
+    for i in range(p):
+        for q in range(nq+1):
+            basis_mat[i,q] = basis.fn(qp[q],p,i)
+            basisG_mat[i,q] = basis.Grad(qp[q],p,i)
+        
+        
+        
