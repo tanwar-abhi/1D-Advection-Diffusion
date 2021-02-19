@@ -133,7 +133,7 @@ else:
     
     # matrix of basis function values at each of the quad points for ease of state evaluation
     basis_mat = np.zeros((p+1,nq), float)
-    basisG_mat = basis_mat
+    basisG_mat = np.zeros((p+1,nq), float)
     
     for i in range(p+1):
         for q in range(nq):
@@ -146,8 +146,9 @@ else:
             res *= 0
             
             k = 1
-            Uinterp = U[(p+1)*(k-1):(p+1)*(k-1)+p+1] * basisG_mat
-            res((p+1)*(k-1):(p+1)*(k-1)+p+1) += basisG_mat*np.diag(Uinterp)*qw*2/dellx
+            #Uinterp = U[(p+1)*(k-1):(p+1)*(k-1)+p+1] * basisG_mat
+            Uinterp = np.matmul(U[(p+1)*(k-1):(p+1)*(k-1)+p+1], basisG_mat)
+            res[(p+1)*(k-1):(p+1)*(k-1)+p+1] += basisG_mat * np.diag(Uinterp)*qw*2/dellx
             
             for n in range(p+1):
                 stateL = U[(p+1)*(k-1)+p]
@@ -188,6 +189,7 @@ else:
             if adv == 1:
                 # analytical flux at quadrature points
                 Uinterp = speed * U[(p+1)*(k-1):(p+1)*(k-1)+p+1] * basis_mat
+                
                 res[(p+1)*(k-1):(p+1)*(k-1)+p+1] -= basisG_mat * np.diag(Uinterp) * qw
                 
                 # boundary term
@@ -196,11 +198,22 @@ else:
                     uRl = U[(p+1)*(k-1)]
                     uLr = U[(p+1)*(k-1)+p]
                     uRr = U[(p+1)*k]
-                    res[(p+1)*(k-1)+n] += (basis.fn(1,p,n) * rusadv(uLr,uRr,[1;0])) - (basis.fn(-1,p,n) * rusadv(uLl,uRl,[1;0]))
-                    
+                    res[(p+1)*(k-1)+n] += (basis.fn(1,p,n) * function.rusadv(uLr,uRr)) - (basis.fn(-1,p,n) * function.rusadv(uLl,uRl))
+            
+            # last element
+            k = N
+            Uinterp = U[(p+1)*(k-1):(p+1)*(k-1)+p+1] * basisG_mat
+            res[(p+1)*(k-1):(p+1)*(k-1)+p+1] += basisG_mat * np.diag(Uinterp)*qw*2/dellx
+            
+            for n in range(p+1):
+                uL = U[(p+1)*(k-1)+p]
+                uR = U[(p+1)*(k-1)+p]
             
             
-# Line 171 matlab
+            
+            
+            
+# Line 188 matlab
     
     
     
