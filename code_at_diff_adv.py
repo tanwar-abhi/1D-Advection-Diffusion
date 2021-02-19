@@ -147,7 +147,7 @@ else:
             
             k = 1
             Uinterp = np.dot(np.transpose(U[(p+1)*(k-1):(p+1)*(k-1)+p+1]), basisG_mat)
-            res[(p+1)*(k-1):(p+1)*(k-1)+p+1] += basisG_mat * np.diag(Uinterp)*qw*2/dellx
+            res[(p+1)*(k-1):(p+1)*(k-1)+p+1] += basisG_mat.dot(np.diag(Uinterp.flatten().tolist()) ).dot(qw*2/dellx)
             
             for n in range(p+1):
                 stateL = U[(p+1)*(k-1)+p]
