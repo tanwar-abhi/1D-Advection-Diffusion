@@ -70,7 +70,7 @@ def Grad(xi, p, m):
                 
                 if xij != xik and xik != xig:
                     prod *= (xi - xik) / (xij - xik)
-            grad_val += (prod/(xij-xig));
+            grad_val += (prod/(xij-xig))
             
             
     return grad_val

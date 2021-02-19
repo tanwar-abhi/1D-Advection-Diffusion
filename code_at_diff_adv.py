@@ -6,15 +6,14 @@ Created on Tue Feb 15 11:56:40 2021
 @author: abhishek
 """
 
-# Global variables used accross all functions
-#global endTime, length, M, n, p, h, delta_t
+import elemental_matrix, initialize, quadrature, basis, function
 
 import numpy as np
 import math
 import matplotlib.pyplot as plt
 from scipy.sparse import diags
 import re
-import elemental_matrix, initialize, quadrature, basis
+
 
 endTime = 0.05                                                  # final time               
 alpha = 4                                                     # coefficient associated with advection term
@@ -37,14 +36,14 @@ if p==1 or p==2:
     Uexact = initialize.Uinit(X,endTime)                   # Exact solution
     U0 = initialize.Uinit(X, 0)                            # initial value at time t =0
     
-    ########################################################################
-    # Simply copy paste from the "LAD_DG_mod.py" code, based on order1_2   #
-    ########################################################################
+    ##########################################################################
+    # Simply copy paste rest from "LAD_DG_mod.py" code, based on order1_2    #
+    ##########################################################################
     
 else:
     speed = 4
     FS = 0                                    #free stream/free stream preservation test indicator
-    adv = 1                                   #%advection on/off
+    adv = 1                                   #advection on/off
     x = np.zeros((N*(p+1),1),float)
     U = np.zeros((N*(p+1),1),float)
     dellx = 1/N                               #length of each element
@@ -55,7 +54,7 @@ else:
     qp = np.sort(qp)
     
     for i in range(1,N+1):
-        # global location of first node of elemen
+        # global location of first node of element
         xbeg = dellx * (i-1)
         
         for j in range(1,p+2):
@@ -103,24 +102,24 @@ else:
     dellt = CFL*(dellx**2)
     
     # iteration number
-    iter = np.ceil(T/dellt)
+    iterator = np.ceil(T/dellt)
     
     # stability factor for interior penalty method- found by experimentation
     # DO NOT EDIT
-    if p==0:
+    if p == 0:
         eta = 2
     else:
-        if N==2:
+        if N == 2:
             eta = 0.4*p**2/dellx
-        elif N==4:
+        elif N == 4:
             eta = 0.2*p**2/dellx
-        elif N==8:
+        elif N == 8:
             eta = 0.1*p**2/dellx
-        elif N==16:
+        elif N == 16:
             eta = 0.06*p**2/dellx
     
     # error vector
-    err = np.zeros((int(iter),1),float)
+    err = np.zeros((int(iterator),1),float)
 
     # Populating mass matrix
     for k in range(N):
@@ -142,12 +141,72 @@ else:
             basisG_mat[i,q] = basis.Grad(qp[q],p,i)
             
     # main iteration loop
-    for time in range(1,iter):
+    for time in range(1, int(iterator)):
         for rk in range(4):
             res *= 0
             
             k = 1
-            Uinterp = U[(p+1)*(k-1):(p+1)*(k-1)+p,1] * basisG_mat
+            Uinterp = U[(p+1)*(k-1):(p+1)*(k-1)+p+1] * basisG_mat
+            res((p+1)*(k-1):(p+1)*(k-1)+p+1) += basisG_mat*np.diag(Uinterp)*qw*2/dellx
+            
+            for n in range(p+1):
+                stateL = U[(p+1)*(k-1)+p]
+                stateR = U[(p+1)*k]
+                Uavg = 0.5*(stateL + stateR)
+                termL = stateL - Uavg
+                termR = stateR - Uavg
+                res[(p+1)*(k-1)+n] -= termL * basis.Grad(1,p,n) * 2/dellx
+                res[(p+1)*k+n] += termR * basis.Grad(-1,p,n) * 2/dellx
+                
+                # gradient discrepancy
+                sigma = 0
+                vL = 0
+                vR = 0
+                
+                for m in range(p+1):
+                    vL += U[(p+1)*(k-1)+m] * basis.Grad(1,p,m)
+                    vR += U[(p+1)*k+m] * basis.Grad(-1,p,m)
+
+                sigma += (vL/dellx) + (vR/dellx) - (eta*(stateL - stateR)/dellx) 
+                res[(p+1)*(k-1)+n] -= basis.fn(1,p,n) * sigma
+                res[(p+1)*k+n] += basis.fn(-1,p,n) * sigma
+                
+                # between left boundary and elem 1- EDIT
+                uL = U[0]
+                uR = U[(p+1)*(k-1)]
+                uHAT = 0.5 * (uL + uR)
+                sigma = 0
+                vR = 0
+                
+                for m in range(p+1):
+                    vR += U[(p+1)*(k-1)+m] * basis.Grad(-1,p,m)
+                    
+                sigma += (vR/dellx) - (eta*(uL-uR)/dellx)
+                res[(p+1)*(k-1)+n] += (basis.fn(-1,p,n) * sigma) + (2*(uR-uHAT)*basis.Grad(-1,p,n)/dellx)
+            
+            # addition of advection terms
+            if adv == 1:
+                # analytical flux at quadrature points
+                Uinterp = speed * U[(p+1)*(k-1):(p+1)*(k-1)+p+1] * basis_mat
+                res[(p+1)*(k-1):(p+1)*(k-1)+p+1] -= basisG_mat * np.diag(Uinterp) * qw
+                
+                # boundary term
+                for n in range(p+1):
+                    uLl = U[(p+1)*(k-1)]
+                    uRl = U[(p+1)*(k-1)]
+                    uLr = U[(p+1)*(k-1)+p]
+                    uRr = U[(p+1)*k]
+                    res[(p+1)*(k-1)+n] += (basis.fn(1,p,n) * rusadv(uLr,uRr,[1;0])) - (basis.fn(-1,p,n) * rusadv(uLl,uRl,[1;0]))
+                    
+            
+            
+# Line 171 matlab
     
     
-        
+    
+    
+    
+    
+    
+    
+    
