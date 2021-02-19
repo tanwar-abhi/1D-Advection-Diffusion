@@ -77,7 +77,7 @@ else:
     Uinit = U
     
     # plotting solution without interpolation over nodes- domain lies between 0 and 1
-    x = np.linspace(0,1,N*(p+1))
+    # x = np.linspace(0,1,N*(p+1))
     plt.plot(x,U,'b-')
     plt.xlabel('x')
     plt.ylabel('state')
@@ -126,7 +126,7 @@ else:
         for i in range(p+1):
             for j in range(p+1):
                 for q in range(nq):
-                    mass[(p+1)*(k-1)+i,(p+1)*(k-1)+j] += qw[q] * basis.fn(qp[q],p,i) * basis.fn(qp[q],p,j)
+                    mass[(p+1)*(k-1)+i,(p+1)*(k-1)+j] += qw[q,0] * basis.fn(qp[q,0],p,i) * basis.fn(qp[q,0],p,j)
                 
     # transforming to global domain
     mass = mass*dellx/2
@@ -137,8 +137,8 @@ else:
     
     for i in range(p+1):
         for q in range(nq):
-            basis_mat[i,q] = basis.fn(qp[q],p,i)
-            basisG_mat[i,q] = basis.Grad(qp[q],p,i)
+            basis_mat[i,q] = basis.fn(qp[q,0],p,i)
+            basisG_mat[i,q] = basis.Grad(qp[q,0],p,i)
             
     # main iteration loop
     for time in range(1, int(iterator)):
@@ -146,8 +146,7 @@ else:
             res *= 0
             
             k = 1
-            #Uinterp = U[(p+1)*(k-1):(p+1)*(k-1)+p+1] * basisG_mat
-            Uinterp = np.matmul(U[(p+1)*(k-1):(p+1)*(k-1)+p+1], basisG_mat)
+            Uinterp = np.dot(np.transpose(U[(p+1)*(k-1):(p+1)*(k-1)+p+1]), basisG_mat)
             res[(p+1)*(k-1):(p+1)*(k-1)+p+1] += basisG_mat * np.diag(Uinterp)*qw*2/dellx
             
             for n in range(p+1):

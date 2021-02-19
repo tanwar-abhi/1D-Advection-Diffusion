@@ -53,11 +53,15 @@ def lgwt(N, a, b):
         y0 = y
         y = y0 - L[:,N2-1]/Lp
     
+    # initialize x and w
+    x = np.zeros((N1,1),float)
+    w = np.zeros((N1,1),float)
+    
     # Linear map from[-1,1] to [a,b]
-    x = (a*(1-y) + b*(1+y))/2
+    x[:,0] = (a*(1-y) + b*(1+y))/2
     
     # Compute weights
-    w = (b-a) / ((1-y**2)*Lp**2)*(N2/N1)**2
+    w[:,0] = (b-a) / ((1-y**2)*Lp**2)*(N2/N1)**2
     
     return x, w
 
