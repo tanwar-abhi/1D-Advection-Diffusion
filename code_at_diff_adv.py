@@ -7,7 +7,7 @@ Created on Tue Feb 15 11:56:40 2021
 """
 
 import elemental_matrix, initialize, quadrature, basis, function
-
+import time
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -77,7 +77,7 @@ else:
     Uinit = U
     
     # plotting solution without interpolation over nodes- domain lies between 0 and 1
-    # x = np.linspace(0,1,N*(p+1))
+    x = np.linspace(0,1,N*(p+1))
     plt.plot(x,U,'b-')
     plt.xlabel('x')
     plt.ylabel('state')
@@ -255,8 +255,8 @@ else:
                     termL = stateL - Uavg
                     termR = stateR - Uavg
                     
-                    res[(p+1)*(k-1)+n,0] -= termL * basis.Grad(1,p,n)*2/dellx
-                    res[(p+1)*(k+1-1)+n,0] += termR * basis.Grad(-1,p,n)*2/dellx
+                    res[(p+1)*(k-1)+n] -= termL * basis.Grad(1,p,n)*2/dellx
+                    res[(p+1)*(k+1-1)+n] += termR * basis.Grad(-1,p,n)*2/dellx
                     
                     # gradient discrepancy
                     sigma = 0
@@ -265,11 +265,53 @@ else:
                     
                     for m in range(p+1):
                         vL += U[(p+1)*(k-1)+m,0] * basis.Grad(1,p,m)
-                        vR += U[(p+1)*(k+1-1)+m,0] * basis.Grad(-1,p,m)
-                
+                        vR += U[(p+1)*(k)+m,0] * basis.Grad(-1,p,m)
+                        
+                    sigma += (vL/dellx) + (vR/dellx) - (eta/dellx) * (stateL - stateR)
                     
+                    res[(p+1)*(k-1)+n] -= basis.fn(1,p,n) * sigma
+                    res[(p+1)*(k)+n] += basis.fn(-1,p,n) * sigma
+                    
+                    # advection boundary terms
+                    if adv == 1:
+                        uLl = U[(p+1)*(k-1-1)+p, 0] 
+                        uRl = U[(p+1)*(k-1), 0]
+                        uLr = U[(p+1)*(k-1)+p, 0]
+                        uRr = U[(p+1)*(k), 0] 
+                        res[(p+1)*(k-1)+n] += (basis.fn(1,p,n) * function.rusadv(uLr,uRr)) - (basis.fn(-1,p,n) * function.rusadv(uLl,uRl))
             
-# Line XXX matlab
+            # Compute solution using Runge-Kutta method
+            if rk == 0:
+                F0 = -np.linalg.inv(mass).dot(res)
+                U0 = U
+                U -= (0.5 * dellt * np.linalg.inv(mass).dot(res))
+                
+            elif rk == 1:
+                F1 = -np.linalg.inv(mass).dot(res)
+                U -= (dellt * 0.5 * np.linalg.inv(mass).dot(res))
+                
+            elif rk == 2:
+                F2 = -np.linalg.inv(mass).dot(res)
+                U -= (dellt * np.linalg.inv(mass).dot(res))
+                
+            elif rk == 3:
+                F3 = -np.linalg.inv(mass).dot(res)
+                U = U0 + ( dellt * (F0 + 2*F1 + 2*F2 + F3)/6)
+                
+            #rk loop
+            plt.plot(np.linspace(0,1,N*(p+1)), U, 'b-')
+            plt.xlabel('x')
+            plt.ylabel('State')
+            plt.title('State at t=t ')
+            time.sleep(0.001)
+        
+    
+    #else plt.plot(x,U,'b-')
+    plt.plot(x,Uinit, 'r-')
+    plt.legend(["U", "Uinit"], loc ="top right")
+    plt.show()
+    
+                    
     
     
     
