@@ -140,6 +140,8 @@ else:
             basis_mat[i,q] = basis.fn(qp[q,0],p,i)
             basisG_mat[i,q] = basis.Grad(qp[q,0],p,i)
             
+    plt.clf()
+    
     # main iteration loop
     for time in range(1, int(iterator)):
         for rk in range(4):
@@ -298,26 +300,22 @@ else:
                 F3 = -np.linalg.inv(mass).dot(res)
                 U = U0 + ( dellt * (F0 + 2*F1 + 2*F2 + F3)/6)
                 
-            #rk loop
+            
+            '''
             plt.plot(np.linspace(0,1,N*(p+1)), U, 'b-')
             plt.xlabel('x')
             plt.ylabel('State')
             plt.title('State at t=t ')
-            time.sleep(0.001)
-        
+            #time.sleep(0.001)
+            '''
     
     #else plt.plot(x,U,'b-')
+    #plt.plot(np.linspace(0,1,N*(p+1)), U, 'b-')
+    plt.plot(x, U, 'b-')
+    plt.xlabel('x')
+    plt.ylabel('State')
+    plt.title('State at t=t ')
+    
     plt.plot(x,Uinit, 'r-')
-    plt.legend(["U", "Uinit"], loc ="top right")
+    plt.legend(["U", "Uinit"], loc ="upper left")
     plt.show()
-    
-                    
-    
-    
-    
-    
-    
-    
-    
-    
-    
