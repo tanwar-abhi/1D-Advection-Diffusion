@@ -7,7 +7,7 @@ Created on Tue Feb 15 11:56:40 2021
 """
 
 import elemental_matrix, initialize, quadrature, basis, function
-import residual
+import residual, time
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -131,7 +131,6 @@ if p==1 or p==2:
             t += delta_t
             
       
-    
     # Calculating the L2 norm
     L2_norm  = math.sqrt(h)*np.linalg.norm((Uexact-uOut),'fro')
     order_value=len(re.search('\d+\.(0*)', str(L2_norm)).group(1)) + 1
@@ -148,8 +147,6 @@ if p==1 or p==2:
     plt.legend(['Initial'],['Approximate']); #not sure why legend makes init soln title appear 2-3 times
     plt.show(); 
     
-     
-
 
     
 else:
@@ -349,7 +346,7 @@ else:
                     res[(p+1)*(k-1)+n] += (basis.fn(1,p,n) * function.rusadv(uLr,uRr)) - (basis.fn(-1,p,n) * function.rusadv(uLl,uRl))
             
             # interior elements
-            for k in range(2,N-1):
+            for k in range(2,N):
                 # interpolated state gradients over quad points
                 Uinterp = U[(p+1)*(k-1):(p+1)*(k-1)+p+1,0].dot(basisG_mat)                
                 res[(p+1)*(k-1):(p+1)*(k-1)+p+1] += basisG_mat.dot(np.diag(Uinterp.flatten().tolist())).dot(qw*2/dellx)
@@ -413,20 +410,21 @@ else:
                 U = U0 + ( dellt * (F0 + 2*F1 + 2*F2 + F3)/6)
                 
             
-            '''
+            
             plt.plot(np.linspace(0,1,N*(p+1)), U, 'b-')
             plt.xlabel('x')
             plt.ylabel('State')
             plt.title('State at t=t ')
-            #time.sleep(0.001)
-            '''
-    
+            time.sleep(0.01)
+            
+    '''
     #else plt.plot(x,U,'b-')
     #plt.plot(np.linspace(0,1,N*(p+1)), U, 'b-')
     plt.plot(x, U, 'b-')
     plt.xlabel('x')
     plt.ylabel('State')
     plt.title('State at t=t ')
+    '''
     
     plt.plot(x,Uinit, 'r-')
     plt.legend(["U", "Uinit"], loc ="upper left")
