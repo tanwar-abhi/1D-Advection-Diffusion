@@ -12,9 +12,10 @@ def fn(xi, p, m):
     -------
     val : function value
     '''
+    m += 1  #to match index
     val = 1
     if p != 0:
-        xij = -1 + (2*(m)/p)
+        xij = -1 + (2*(m-1)/p)
     else:
         xij = 1
         
@@ -46,10 +47,11 @@ def Grad(xi, p, m):
     -------
     grad_val : value of gradient
     '''
+    m += 1  #to match index
     grad_val = 0.0
     
     if p != 0:
-        xij = -1 + (2*m/p)
+        xij = -1 + (2*(m-1)/p)
     else:
         xij = 1
     

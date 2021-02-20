@@ -51,7 +51,7 @@ else:
     # Quadrature points
     nq = p + 5                              #no. of quadrature points
     qp,qw = quadrature.lgwt(nq,-1,1)
-    qp = np.sort(qp)
+    qp[:,0].sort()
     
     for i in range(1,N+1):
         # global location of first node of element
@@ -150,13 +150,13 @@ else:
             res[(p+1)*(k-1):(p+1)*(k-1)+p+1] += basisG_mat.dot(np.diag(Uinterp.flatten().tolist()) ).dot(qw*2/dellx)
             
             for n in range(p+1):
-                stateL = U[(p+1)*(k-1)+p]
-                stateR = U[(p+1)*k]
+                stateL = U[(p+1)*(k-1)+p,0]
+                stateR = U[(p+1)*k,0]
                 Uavg = 0.5*(stateL + stateR)
                 termL = stateL - Uavg
                 termR = stateR - Uavg
-                res[(p+1)*(k-1)+n] -= termL * basis.Grad(1,p,n) * 2/dellx
-                res[(p+1)*k+n] += termR * basis.Grad(-1,p,n) * 2/dellx
+                res[(p+1)*(k-1)+n,0] -= termL * basis.Grad(1,p,n) * 2/dellx
+                res[(p+1)*k+n,0] += termR * basis.Grad(-1,p,n) * 2/dellx
                 
                 # gradient discrepancy
                 sigma = 0
@@ -164,22 +164,26 @@ else:
                 vR = 0
                 
                 for m in range(p+1):
-                    vL += U[(p+1)*(k-1)+m] * basis.Grad(1,p,m)
-                    vR += U[(p+1)*k+m] * basis.Grad(-1,p,m)
-
+                    vL += U[(p+1)*(k-1)+m,0] * basis.Grad(1,p,m)
+                    vR += U[(p+1)*k+m,0] * basis.Grad(-1,p,m)
+                
+                # convert array to float
+                #vL = vL[0]
+                #vR = vR[0]
+                
                 sigma += (vL/dellx) + (vR/dellx) - (eta*(stateL - stateR)/dellx) 
-                res[(p+1)*(k-1)+n] -= basis.fn(1,p,n) * sigma
-                res[(p+1)*k+n] += basis.fn(-1,p,n) * sigma
+                res[(p+1)*(k-1)+n,0] -= basis.fn(1,p,n) * sigma
+                res[(p+1)*k+n,0] += basis.fn(-1,p,n) * sigma
                 
                 # between left boundary and elem 1- EDIT
-                uL = U[0]
-                uR = U[(p+1)*(k-1)]
+                uL = U[0,0]
+                uR = U[(p+1)*(k-1),0]
                 uHAT = 0.5 * (uL + uR)
                 sigma = 0
                 vR = 0
                 
                 for m in range(p+1):
-                    vR += U[(p+1)*(k-1)+m] * basis.Grad(-1,p,m)
+                    vR += U[(p+1)*(k-1)+m,0] * basis.Grad(-1,p,m)
                     
                 sigma += (vR/dellx) - (eta*(uL-uR)/dellx)
                 res[(p+1)*(k-1)+n] += (basis.fn(-1,p,n) * sigma) + (2*(uR-uHAT)*basis.Grad(-1,p,n)/dellx)
@@ -187,16 +191,18 @@ else:
             # addition of advection terms
             if adv == 1:
                 # analytical flux at quadrature points
-                Uinterp = speed * U[(p+1)*(k-1):(p+1)*(k-1)+p+1] * basis_mat
+                #Uinterp = speed * U[(p+1)*(k-1):(p+1)*(k-1)+p+1] * basis_mat
+                Uinterp = speed * U[(p+1)*(k-1):(p+1)*(k-1)+p+1].transpose().dot(basis_mat)
                 
-                res[(p+1)*(k-1):(p+1)*(k-1)+p+1] -= basisG_mat * np.diag(Uinterp) * qw
+                #res[(p+1)*(k-1):(p+1)*(k-1)+p+1,0] -= basisG_mat * np.diag(Uinterp) * qw
+                res[(p+1)*(k-1):(p+1)*(k-1)+p+1] -= basisG_mat.dot(np.diag(Uinterp.flatten().tolist())).dot(qw)
                 
                 # boundary term
                 for n in range(p+1):
-                    uLl = U[(p+1)*(k-1)]
-                    uRl = U[(p+1)*(k-1)]
-                    uLr = U[(p+1)*(k-1)+p]
-                    uRr = U[(p+1)*k]
+                    uLl = U[(p+1)*(k-1),0]
+                    uRl = U[(p+1)*(k-1),0]
+                    uLr = U[(p+1)*(k-1)+p,0]
+                    uRr = U[(p+1)*k,0]
                     res[(p+1)*(k-1)+n] += (basis.fn(1,p,n) * function.rusadv(uLr,uRr)) - (basis.fn(-1,p,n) * function.rusadv(uLl,uRl))
             
             # last element
