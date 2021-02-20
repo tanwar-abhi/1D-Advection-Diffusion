@@ -7,7 +7,7 @@ Created on Tue Feb 15 11:56:40 2021
 """
 
 import elemental_matrix, initialize, quadrature, basis, function
-import time
+import residual
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -33,12 +33,124 @@ if p==1 or p==2:
 
     X, U0, Uexact = initialize.solutionT0(p, n, h, N, endTime, length)
 
-    Uexact = initialize.Uinit(X,endTime)                   # Exact solution
-    U0 = initialize.Uinit(X, 0)                            # initial value at time t =0
+    # Exact solution
+    Uexact = initialize.Uinit(X,endTime)
     
-    ##########################################################################
-    # Simply copy paste rest from "LAD_DG_mod.py" code, based on order1_2    #
-    ##########################################################################
+    # initial value at time t =0
+    U0 = initialize.Uinit(X, 0)
+    
+    # Defining the time loop and inside the time loop the elemental loop 
+    # Time stepping algorithm  = Runge Kutta 3rd order( 3 step) 
+    t = 0
+    
+    if p == 1:
+        
+        # initializing the final solution variable(U).
+        uOut = np.zeros((n,2),dtype=float)
+        
+        # time loop
+        while (t<endTime):
+            print("TIMELOOP:-",t)    
+            
+            # elemental loop
+            for i in range(0,N):
+                # for each element 2 nodes will be there for 1st order
+                u0 = np.zeros((2,1),dtype=float)      
+                
+                # for left node of an element the right value of the node is that needs to find out
+                u0[0] = U0[i,1]
+                
+                # for right  node of an element the left value of the node is that needs to find out 
+                u0[1] = U0[i+1,0]
+                
+                #Runge Kutta 1st step
+                Utemp1 = u0 + delta_t*residual.resid(p,beta,h,N,U0,i,u0,K_diffusion, K_advection, mass_matrix)
+                
+                #Runge Kutta 2nd step  
+                Utemp2 = 0.75*u0 + 0.25*Utemp1 +0.25*delta_t*residual.resid(p,beta,h,N,U0,i,Utemp1,K_diffusion, K_advection, mass_matrix) 
+           
+                # Runge Kutta 3rd step
+                #resid(p,beta,h,N,U0,i,u0, K_diffusion, K_advection, mass_matrix):
+                Utemp3 = (1/3)*u0 +(2/3)*Utemp2 + (2/3)*delta_t*residual.resid(p,beta,h,N,U0,i,Utemp2,K_diffusion, K_advection, mass_matrix)
+                
+                uOut[i,1] = Utemp3[0]                   
+                uOut[i+1,0] = Utemp3[1]
+          
+                Up = np.zeros((2*n,1),dtype=float)        
+                Xp = np.zeros((2*n,1),dtype=float)
+                
+                for i in range(0,n):
+                    Up[2*i,0]=uOut[i,0]
+                    Up[2*i+1,0]=uOut[i,1]
+                    Xp[2*i,0]=X[i,0]
+                    Xp[2*i+1,0]=X[i,1]
+                    
+                    
+            #once all the element have been solved then the U0(initial solution) will be updated by Uout(final solution after 1st time iteration)
+            U0 = uOut
+            # increase the time step by delta_t
+            t += delta_t 
+            
+    elif p == 2:
+        uOut = np.zeros((N,3),dtype=float)
+        while (t<endTime):
+            print("TIMELOOP:-",t)    
+            for i in range(0,N):
+                #print("element-",i)
+                u0 = np.zeros((3,1),dtype=float)
+         
+                u0[0] = U0[i,0]
+                u0[1] = U0[i,1] 
+                u0[2] = U0[i,2]
+           
+          
+                Utemp1 = u0 + delta_t*residual.resid(p,beta,h,N,U0,i,u0,K_diffusion, K_advection, mass_matrix)
+                Utemp2 = 0.75*u0 + 0.25*Utemp1 +0.25*delta_t*residual.resid(p,beta,h,N,U0,i,Utemp1,K_diffusion, K_advection, mass_matrix)
+                Utemp3 = (1/3)*u0 +(2/3)*Utemp2 + (2/3)*delta_t*residual.resid(p,beta,h,N,U0,i,Utemp2,K_diffusion, K_advection, mass_matrix)
+            
+            #Utemp3 is the final vector after applying Runge Kutta and will have two values 
+            # the 1st  value of the Utemp3 for  each element will be the left value  of that element        
+            # the 2nd  value of the Utemp3 for  each element will be the  middle value  of that element      
+            # the 3rd  value of the Utemp3 for  each element will be the right value  of that element           
+            
+                uOut[i,0]=Utemp3[0]
+                uOut[i,1]=Utemp3[1]
+                uOut[i,2]=Utemp3[2]
+        
+                Up = np.zeros((3*N,1),dtype=float)
+                Xp = np.zeros((3*N,1),dtype=float)
+            
+                for i in range(0,N):
+                    Up[3*i,0] = uOut[i,0]
+                    Up[3*i+1,0] = uOut[i,1]
+                    Up[3*i+2,0] = uOut[i,2]
+                    Xp[3*i,0] = X[i,0]
+                    Xp[3*i+1,0] = X[i,1]
+                    Xp[3*i+2,0] = X[i,2]
+            U0 = uOut
+            t += delta_t
+            
+      
+    
+    # Calculating the L2 norm
+    L2_norm  = math.sqrt(h)*np.linalg.norm((Uexact-uOut),'fro')
+    order_value=len(re.search('\d+\.(0*)', str(L2_norm)).group(1)) + 1
+    
+    # initial soln
+    Uin = initialize.Uinit(X,0)
+    
+    plt.plot(X,Uin,color='red')
+    plt.plot(Xp,Up,'green')   
+    plt.xlabel('X')
+    plt.ylabel('U')
+    plt.title("Uinit and Uapprox")  
+
+    plt.legend(['Initial'],['Approximate']); #not sure why legend makes init soln title appear 2-3 times
+    plt.show(); 
+    
+     
+
+
     
 else:
     speed = 4
@@ -143,7 +255,7 @@ else:
     plt.clf()
     
     # main iteration loop
-    for time in range(1, int(iterator)):
+    for TIME in range(1, int(iterator)):
         for rk in range(4):
             res *= 0
             
