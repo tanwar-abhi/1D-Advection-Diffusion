@@ -22,13 +22,14 @@ def solutionT0(p, n, h, M, endTime, length):
     
     if (p==1):
         X = np.linspace((0,0),(length,length),(n))      
-        U0 = np.zeros((n,2), dtype = float)          
+        U0 = np.zeros((n,2), dtype = float)
+        Uexact = np.zeros((n,2), dtype = float)
 
         # the 1st coloumn(left value at  the node)
         # tne 2nd coloumn (right value at the node)
         X[0,0] = 0
         X[0,1] = h
-        for i in range(0 , M-1):
+        for i in range(M-1):
             if i == M-2:
                 X[M-1,0] = X[i,0] + h
                 X[M-1,1] = X[i,1] + h
@@ -37,7 +38,7 @@ def solutionT0(p, n, h, M, endTime, length):
                 X[i+1,1] = X[i,1] + h      
                
     
-    if (p==2):
+    elif (p == 2):
         X = np.zeros((M,3), dtype = float)
         U0 = np.zeros((M,3), dtype = float)
         Uexact = np.zeros((M,3), dtype = float)
@@ -49,8 +50,8 @@ def solutionT0(p, n, h, M, endTime, length):
         X[0,1] = h/2
         X[0,2] = h
     
-        for i in range(0 , M-1):
-            if i==M-2:
+        for i in range(M-1):
+            if i == M-2:
                 X[M-1,0] = X[i,0] + h
                 X[M-1,1] = X[i,1] + h
                 X[M-1,2] = X[i,2] + h
@@ -64,9 +65,9 @@ def solutionT0(p, n, h, M, endTime, length):
 
 def Uinit(X,t):
     
-    Uexact = (0.025/math.sqrt(0.000625+0.02*t))*np.exp((-1*((X-0.5-t)**2))/(0.00125+0.04*t))
+    Uret = (0.025/math.sqrt(0.000625+0.02*t))*np.exp((-1*((X-0.5-t)**2))/(0.00125+0.04*t))
   
-    return Uexact
+    return Uret
 
  
         
