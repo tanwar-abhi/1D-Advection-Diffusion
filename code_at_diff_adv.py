@@ -191,10 +191,7 @@ else:
             # addition of advection terms
             if adv == 1:
                 # analytical flux at quadrature points
-                #Uinterp = speed * U[(p+1)*(k-1):(p+1)*(k-1)+p+1] * basis_mat
-                Uinterp = speed * U[(p+1)*(k-1):(p+1)*(k-1)+p+1].transpose().dot(basis_mat)
-                
-                #res[(p+1)*(k-1):(p+1)*(k-1)+p+1,0] -= basisG_mat * np.diag(Uinterp) * qw
+                Uinterp = speed * U[(p+1)*(k-1):(p+1)*(k-1)+p+1].transpose().dot(basis_mat)             
                 res[(p+1)*(k-1):(p+1)*(k-1)+p+1] -= basisG_mat.dot(np.diag(Uinterp.flatten().tolist())).dot(qw)
                 
                 # boundary term
@@ -207,18 +204,72 @@ else:
             
             # last element
             k = N
-            Uinterp = U[(p+1)*(k-1):(p+1)*(k-1)+p+1] * basisG_mat
-            res[(p+1)*(k-1):(p+1)*(k-1)+p+1] += basisG_mat * np.diag(Uinterp)*qw*2/dellx
+            Uinterp = U[(p+1)*(k-1):(p+1)*(k-1)+p+1,0].dot(basisG_mat)
+            res[(p+1)*(k-1):(p+1)*(k-1)+p+1] += basisG_mat.dot(np.diag(Uinterp.flatten().tolist())).dot(qw*2/dellx)
             
             for n in range(p+1):
-                uL = U[(p+1)*(k-1)+p]
-                uR = U[(p+1)*(k-1)+p]
+                uL = U[(p+1)*(k-1)+p,0]
+                uR = U[(p+1)*(k-1)+p,0]
+                uHAT = 0.5*(uL + uR)
+                sigma = 0
+                vL = 0
+                
+                for m in range(p+1):
+                    vL += U[(p+1)*(k-1)+m ,0] * basis.Grad(1,p,m)
+                
+                sigma += (vL/dellx) - (eta*(uL-uR)/dellx)
+                res[(p+1)*(k-1)+n,0] -= basis.fn(1,p,n)*sigma - (2*(uL-uHAT) * basis.Grad(1,p,n)/dellx)
+                
+            # addition of advection terms
+            if adv == 1:
+                # analytical flux at quadrature points
+                Uinterp = speed * U[(p+1)*(k-1):(p+1)*(k-1)+p+1,0].dot(basis_mat)
+                res[(p+1)*(k-1):(p+1)*(k-1)+p+1] -= basisG_mat.dot(np.diag(Uinterp.flatten().tolist()).dot(qw))
+                
+                # boundary term
+                for n in range(p+1):
+                    uLl = U[(p+1)*(k-1-1)+p,0]
+                    uRl = U[(p+1)*(k-1),0]
+                    uLr = U[(p+1)*(k-1)+p,0]
+                    uRr = U[(p+1)*(k-1)+p,0]
+                    res[(p+1)*(k-1)+n] += (basis.fn(1,p,n) * function.rusadv(uLr,uRr)) - (basis.fn(-1,p,n) * function.rusadv(uLl,uRl))
             
+            # interior elements
+            for k in range(2,N-1):
+                # interpolated state gradients over quad points
+                Uinterp = U[(p+1)*(k-1):(p+1)*(k-1)+p+1,0].dot(basisG_mat)                
+                res[(p+1)*(k-1):(p+1)*(k-1)+p+1] += basisG_mat.dot(np.diag(Uinterp.flatten().tolist())).dot(qw*2/dellx)
+                
+                # advection interior integral
+                if adv == 1:
+                    # analytical flux at quadrature points
+                    Uinterp = speed * U[(p+1)*(k-1):(p+1)*(k-1)+p+1,0].dot(basis_mat)
+                    res[(p+1)*(k-1):(p+1)*(k-1)+p+1] -= basisG_mat.dot(np.diag(Uinterp.flatten().tolist())).dot(qw)
+                
+                # boundary integrals
+                # state discrepancy
+                for n in range(p+1):
+                    stateL = U[(p+1)*(k-1)+p,0]
+                    stateR = U[(p+1)*(k+1-1),0]
+                    Uavg = 0.5*(stateL + stateR)
+                    termL = stateL - Uavg
+                    termR = stateR - Uavg
+                    
+                    res[(p+1)*(k-1)+n,0] -= termL * basis.Grad(1,p,n)*2/dellx
+                    res[(p+1)*(k+1-1)+n,0] += termR * basis.Grad(-1,p,n)*2/dellx
+                    
+                    # gradient discrepancy
+                    sigma = 0
+                    vL = 0
+                    vR = 0
+                    
+                    for m in range(p+1):
+                        vL += U[(p+1)*(k-1)+m,0] * basis.Grad(1,p,m)
+                        vR += U[(p+1)*(k+1-1)+m,0] * basis.Grad(-1,p,m)
+                
+                    
             
-            
-            
-            
-# Line 188 matlab
+# Line XXX matlab
     
     
     
